@@ -1,0 +1,17 @@
+services:
+  comida-amor:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Pon COOKIE_SECURE=true cuando la sirvas con HTTPS (lo normal en producción).
+      COOKIE_SECURE: "false"
+      DEMO_ENABLED: "true"
+      ALLOW_REGISTRATION: "true"
+      VAPID_SUBJECT: "mailto:tu-correo@ejemplo.com"
+    volumes:
+      - comida-amor-datos:/data
+
+volumes:
+  comida-amor-datos:
