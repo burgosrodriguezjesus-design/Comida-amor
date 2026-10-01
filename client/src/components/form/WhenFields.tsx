@@ -1,5 +1,4 @@
 import clsx from 'clsx';
-import { Clock } from 'lucide-react';
 import { localDateTimeParts } from '@shared/dates';
 import { shiftDateTime } from '@/lib/draft';
 import { relativeDayLabel } from '@/lib/format';
@@ -31,31 +30,30 @@ export function WhenFields({
   const isNow = !touched;
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <label className="relative min-w-[8.75rem] flex-1">
-            <span className="sr-only">Hora</span>
-            <Clock size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-ink-3" aria-hidden="true" />
-            <input
-              type="time"
-              className="field py-2.5 pl-10 text-[17px] font-semibold tabular-nums"
-              value={isNow ? now.time : time}
-              onChange={(e) => e.target.value && onChange({ date: isNow ? now.date : date, time: e.target.value, touched: true })}
-              required
-            />
-          </label>
-          <label className="min-w-[9rem] flex-[1.2]">
-            <span className="sr-only">Día</span>
-            <input
-              type="date"
-              className="field py-2.5"
-              value={isNow ? now.date : date}
-              max={now.date}
-              onChange={(e) => e.target.value && onChange({ date: e.target.value, time: isNow ? now.time : time, touched: true })}
-              required
-            />
-          </label>
-        </div>
+      {/* Rejilla con columnas que pueden encogerse: en iPhone los campos de fecha y hora
+          tienen un ancho propio que, en una fila flexible, hacía que se montaran. */}
+      <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+        <label className="block min-w-0">
+          <span className="sr-only">Hora</span>
+          <input
+            type="time"
+            className="field px-3.5 py-2.5 text-[17px] font-semibold tabular-nums"
+            value={isNow ? now.time : time}
+            onChange={(e) => e.target.value && onChange({ date: isNow ? now.date : date, time: e.target.value, touched: true })}
+            required
+          />
+        </label>
+        <label className="block min-w-0">
+          <span className="sr-only">Día</span>
+          <input
+            type="date"
+            className="field px-3.5 py-2.5"
+            value={isNow ? now.date : date}
+            max={now.date}
+            onChange={(e) => e.target.value && onChange({ date: e.target.value, time: isNow ? now.time : time, touched: true })}
+            required
+          />
+        </label>
       </div>
       <p className="mt-1.5 text-[13px] text-ink-3">
         {isNow ? 'Se guardará con la hora actual.' : `${relativeDayLabel(date, now.date)} a las ${time}`}

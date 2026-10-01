@@ -32,7 +32,7 @@ export function MealTypePicker({
             onClick={() => onChange(type.id)}
             className={clsx(
               'flex shrink-0 items-center rounded-2xl border text-ink transition-all duration-150 active:scale-[0.97]',
-              compact ? 'h-10 gap-1.5 px-3 text-sm font-medium' : 'flex-col justify-center gap-1 px-1 py-2.5 text-[12.5px] font-semibold',
+              compact ? 'h-10 gap-1.5 px-3 text-sm font-medium' : 'min-w-0 flex-col justify-center gap-1 px-0.5 py-2.5 text-[11.5px] font-semibold min-[360px]:text-[12.5px]',
               selected ? 'border-transparent shadow-soft-sm' : 'border-line bg-surface hover:border-line-strong',
             )}
             style={selected ? { ...mealColor(type.id), boxShadow: `inset 0 0 0 2px var(--meal-${type.id})` } : undefined}

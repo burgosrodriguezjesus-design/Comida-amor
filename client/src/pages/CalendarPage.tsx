@@ -171,10 +171,10 @@ function MonthView({
               <span className="tabular-nums">{Number(day.slice(8))}</span>
               <span className="mt-0.5 flex h-1.5 gap-0.5" aria-hidden="true">
                 {info &&
-                  Array.from({ length: Math.min(info.count, 5) }, (_, i) => (
+                  Array.from({ length: Math.min(info.count, 4) }, (_, i) => (
                     <span
                       key={i}
-                      className={clsx('h-1.5 w-1.5 rounded-full', isSelected ? 'bg-bg/80' : 'bg-brand/70')}
+                      className={clsx('h-[5px] w-[5px] rounded-full', isSelected ? 'bg-bg/80' : 'bg-brand/70')}
                     />
                   ))}
               </span>
@@ -182,7 +182,7 @@ function MonthView({
           );
         })}
       </div>
-      <p className="mt-3 text-center text-xs text-ink-3">Cada punto es un registro. Desliza para cambiar de mes.</p>
+      <p className="mt-3 text-center text-xs text-ink-3">Los puntos indican los registros del día (hasta 4). Desliza para cambiar de mes.</p>
     </section>
   );
 }

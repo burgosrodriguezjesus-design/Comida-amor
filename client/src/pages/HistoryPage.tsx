@@ -294,8 +294,8 @@ function FilterSheet({
       title="Filtros"
       footer={
         <div className="flex gap-3">
-          <Button variant="secondary" className="flex-1" onClick={() => setDraft({ ...draft, from: '', to: '', types: [], food: '', symptoms: false, photos: false })}>
-            Borrar filtros
+          <Button variant="secondary" className="shrink-0" onClick={() => setDraft({ ...draft, from: '', to: '', types: [], food: '', symptoms: false, photos: false })}>
+            Borrar
           </Button>
           <Button className="flex-1" onClick={() => onApply(draft)}>
             Ver resultados
@@ -313,14 +313,14 @@ function FilterSheet({
               </Chip>
             ))}
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
             <label>
               <span className="mb-1 block text-[13px] text-ink-2">Desde</span>
-              <input type="date" className="field py-2.5" value={draft.from} max={draft.to || today} onChange={(e) => set({ from: e.target.value })} />
+              <input type="date" className="field px-3.5 py-2.5" value={draft.from} max={draft.to || today} onChange={(e) => set({ from: e.target.value })} />
             </label>
             <label>
               <span className="mb-1 block text-[13px] text-ink-2">Hasta</span>
-              <input type="date" className="field py-2.5" value={draft.to} min={draft.from || undefined} max={today} onChange={(e) => set({ to: e.target.value })} />
+              <input type="date" className="field px-3.5 py-2.5" value={draft.to} min={draft.from || undefined} max={today} onChange={(e) => set({ to: e.target.value })} />
             </label>
           </div>
           <p className="mt-1.5 text-[13px] text-ink-3">Para un día concreto, pon la misma fecha en los dos campos.</p>

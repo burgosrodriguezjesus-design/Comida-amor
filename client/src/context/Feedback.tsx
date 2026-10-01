@@ -96,7 +96,8 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
         title={confirmState?.title ?? ''}
         size="sm"
         footer={
-          <div className="flex gap-3">
+          // En móvil, botones uno encima de otro (el principal arriba) para que los textos largos no se partan.
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
             <Button variant="secondary" className="flex-1" onClick={() => closeConfirm(false)}>
               {confirmState?.cancelLabel ?? 'Cancelar'}
             </Button>

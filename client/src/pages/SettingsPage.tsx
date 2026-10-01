@@ -177,13 +177,7 @@ function RemindersSection() {
             <ul className="space-y-2">
               {settings.times.map((t) => (
                 <li key={t.id} className="flex items-center gap-3 rounded-2xl bg-surface-2 py-1.5 pr-1.5 pl-3">
-                  <input
-                    type="time"
-                    value={t.time}
-                    onChange={(e) => e.target.value && updateTime(t.id, { time: e.target.value })}
-                    className="min-h-10 rounded-xl bg-transparent px-1 text-[17px] font-semibold tabular-nums focus:outline-none"
-                    aria-label="Hora del recordatorio"
-                  />
+                  <ReminderTimeInput value={t.time} onCommit={(time) => updateTime(t.id, { time })} />
                   <span className="flex-1" />
                   <Switch hideLabel checked={t.enabled} onChange={(enabled) => updateTime(t.id, { enabled })} label={`Activar aviso de las ${t.time}`} />
                   <button
@@ -275,6 +269,26 @@ function RemindersSection() {
         </div>
       )}
     </Section>
+  );
+}
+
+/** Hora de un aviso: se guarda al terminar de elegirla (no a cada giro de la rueda en iPhone). */
+function ReminderTimeInput({ value, onCommit }: { value: string; onCommit: (time: string) => void }) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  const commit = () => {
+    if (draft && draft !== value) onCommit(draft);
+  };
+  return (
+    <input
+      type="time"
+      value={draft}
+      onChange={(e) => e.target.value && setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => e.key === 'Enter' && commit()}
+      className="w-28 rounded-xl bg-transparent px-1 text-[17px] font-semibold tabular-nums focus:outline-none"
+      aria-label="Hora del recordatorio"
+    />
   );
 }
 

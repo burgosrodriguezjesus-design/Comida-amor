@@ -97,14 +97,14 @@ export function ReportPage() {
               ))}
             </div>
             {period === 'custom' && (
-              <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="mt-3 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
                 <label>
                   <span className="mb-1 block text-[13px] text-ink-2">Desde</span>
-                  <input type="date" className="field py-2.5" value={customFrom} max={today} onChange={(e) => e.target.value && setCustomFrom(e.target.value)} />
+                  <input type="date" className="field px-3.5 py-2.5" value={customFrom} max={today} onChange={(e) => e.target.value && setCustomFrom(e.target.value)} />
                 </label>
                 <label>
                   <span className="mb-1 block text-[13px] text-ink-2">Hasta</span>
-                  <input type="date" className="field py-2.5" value={customTo} max={today} onChange={(e) => e.target.value && setCustomTo(e.target.value)} />
+                  <input type="date" className="field px-3.5 py-2.5" value={customTo} max={today} onChange={(e) => e.target.value && setCustomTo(e.target.value)} />
                 </label>
               </div>
             )}

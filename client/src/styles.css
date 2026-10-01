@@ -149,9 +149,43 @@
   select {
     font-size: 16px; /* evita el zoom automático en iOS */
   }
+  /* Safari en iPhone da a los campos de fecha/hora un ancho propio y centra el texto:
+     se les quita el aspecto nativo para que respeten el ancho de su columna. */
   input[type='date'],
-  input[type='time'] {
+  input[type='time'],
+  input[type='datetime-local'] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    min-width: 0;
+    max-width: 100%;
     min-height: 2.75rem;
+    line-height: 1.25;
+    text-align: left;
+  }
+  input[type='date']::-webkit-date-and-time-value,
+  input[type='time']::-webkit-date-and-time-value {
+    text-align: left;
+    margin: 0;
+    min-height: 1.25em;
+  }
+  input[type='date']::-webkit-calendar-picker-indicator,
+  input[type='time']::-webkit-calendar-picker-indicator {
+    opacity: 0.55;
+    cursor: pointer;
+  }
+  input[type='search'] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  /* Desplegables con el mismo aspecto en todos los navegadores */
+  select.field {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 2.75rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23978a81' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
   }
   input[type='search']::-webkit-search-cancel-button {
     appearance: none;
