@@ -21,14 +21,16 @@ function Gate() {
   const me = useMe();
   const client = useQueryClient();
   const navigate = useNavigate();
-  const signedIn = useRef(false);
+  const previous = useRef<unknown>(undefined);
 
-  // En la versión de prueba, al empezar (o volver de la demostración) se abre siempre «Hoy».
+  // Al iniciar sesión (o empezar el diario) se abre «Hoy»; al abrir la app con la sesión ya
+  // iniciada se respeta la dirección (p. ej. un acceso directo al informe).
   useEffect(() => {
-    const now = Boolean(me.data);
-    if (IS_LOCAL && now && !signedIn.current) navigate('/', { replace: true });
-    signedIn.current = now;
-  }, [me.data, navigate]);
+    if (me.isPending) return;
+    const now = me.data ?? null;
+    if (now && (previous.current === null || (IS_LOCAL && previous.current === undefined))) navigate('/', { replace: true });
+    previous.current = now;
+  }, [me.data, me.isPending, navigate]);
 
   useEffect(() => {
     setUnauthorizedHandler(() => {

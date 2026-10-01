@@ -20,7 +20,7 @@ import { createDbBackend, createIdbBackend, createMemoryBackend, serialWriter, t
 import { useCapability, viewerId } from './platform';
 
 /** Registro tal y como se guarda (las fotos van aparte, por id). */
-type StoredEntry = Omit<Entry, 'photos'> & { photoIds: string[] };
+export type StoredEntry = Omit<Entry, 'photos'> & { photoIds: string[] };
 
 interface Profile extends Doc {
   name: string;
@@ -28,7 +28,7 @@ interface Profile extends Doc {
   timezone: string;
 }
 
-const DEFAULT_REMINDERS: ReminderTime[] = [
+export const DEFAULT_REMINDERS: ReminderTime[] = [
   { id: 'desayuno', time: '09:30', enabled: true },
   { id: 'comida', time: '15:00', enabled: true },
   { id: 'cena', time: '21:45', enabled: true },
@@ -192,7 +192,7 @@ async function hydrate(state: State, list: StoredEntry[]): Promise<Entry[]> {
 
 // ---------- Validación ----------
 
-function validateEntry(body: EntryInput): Omit<StoredEntry, 'id' | 'createdAt' | 'updatedAt'> {
+export function validateEntry(body: EntryInput): Omit<StoredEntry, 'id' | 'createdAt' | 'updatedAt'> {
   if (!body || typeof body !== 'object') throw new ApiError('Datos no válidos.', 400);
   if (!isValidDateTime(body.eatenAt)) throw new ApiError('La fecha u hora no es válida.', 400);
   if (!(MEAL_TYPE_IDS as string[]).includes(body.mealType)) throw new ApiError('Elige un tipo de comida.', 400);
@@ -242,7 +242,7 @@ function startDemo() {
     const photoIds: string[] = [];
     if (plan.photo) {
       const id = uuid();
-      photos.set(id, { full: `demo/${plan.photo}.jpg`, thumb: `demo/${plan.photo}_thumb.jpg`, width: 1200, height: 900, createdAt: nowIso() });
+      photos.set(id, { full: `${import.meta.env.BASE_URL}demo/${plan.photo}.jpg`, thumb: `${import.meta.env.BASE_URL}demo/${plan.photo}_thumb.jpg`, width: 1200, height: 900, createdAt: nowIso() });
       photoIds.push(id);
     }
     const { photo: _photo, ...rest } = plan;

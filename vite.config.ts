@@ -7,6 +7,7 @@ import tailwindcss from '@tailwindcss/vite';
 // como una única página (ver scripts/build-artifact.mjs).
 export default defineConfig(({ mode }) => {
   const artifact = mode === 'artifact';
+  const web = mode === 'web' || mode === 'webtest';
   return {
     root: 'client',
     base: artifact ? './' : '/',
@@ -22,7 +23,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      outDir: artifact ? '../dist/artifact' : '../dist/client',
+      outDir: artifact ? '../dist/artifact' : web ? (mode === 'webtest' ? '../dist/webtest' : '../dist/web') : '../dist/client',
       emptyOutDir: true,
       chunkSizeWarningLimit: artifact ? 4000 : 900,
       // En la página publicada todo va en un solo archivo (incluidas las tipografías).

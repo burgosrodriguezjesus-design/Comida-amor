@@ -1,6 +1,6 @@
 // Cliente HTTP mínimo para la API. Las cookies de sesión viajan automáticamente.
 
-import { IS_LOCAL } from '@/lib/env';
+import { IS_LOCAL, IS_SUPABASE } from '@/lib/env';
 
 export class ApiError extends Error {
   constructor(
@@ -18,10 +18,14 @@ export function setUnauthorizedHandler(handler: () => void) {
 }
 
 async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
-  if (IS_LOCAL) {
-    // Versión de prueba: la «API» vive en el propio navegador.
-    const { localRequest } = await import('@/local/localApi');
+  if (IS_LOCAL || IS_SUPABASE) {
+    // Versión de prueba (todo en el navegador) o app publicada con Supabase.
     try {
+      if (IS_SUPABASE) {
+        const { supabaseRequest } = await import('@/remote/supabaseApi');
+        return await supabaseRequest<T>(method, url, body);
+      }
+      const { localRequest } = await import('@/local/localApi');
       return await localRequest<T>(method, url, body);
     } catch (error) {
       if (error instanceof ApiError && error.status === 401 && !url.startsWith('/api/auth/')) onUnauthorized?.();
