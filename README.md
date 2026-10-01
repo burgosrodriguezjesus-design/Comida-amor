@@ -59,6 +59,22 @@ npm run build && npm run e2e   # recorrido completo con un navegador real + capt
 
 La prueba de extremo a extremo recorre registro rápido (y deshacer), formulario completo con foto y síntomas, edición, borrado, calendario, búsqueda, filtros, estadísticas, descarga del PDF, ajustes, modo oscuro, escritorio y una cuenta nueva (incluido que una cuenta no puede ver los datos de otra).
 
+## Versión de prueba (sin servidor)
+
+Además de la app completa, el proyecto genera una **versión que funciona entera en el navegador**, pensada para probarla sin instalar nada, por ejemplo publicada como página privada en claude.ai:
+
+```bash
+npm run build:artifact     # crea dist/artifact/comida-amor.html (+ fotos de ejemplo en dist/artifact/demo)
+npm run e2e:artifact       # la prueba con un navegador real
+```
+
+Usa exactamente la misma interfaz; solo cambia dónde viven los datos (`client/src/local/`):
+
+- Dentro de claude.ai, en el **espacio privado de cada persona** (nadie más lo ve, ni quien comparte la página); fuera, en el propio navegador (IndexedDB).
+- Entrada solo con el nombre (sin contraseña) y botón para ver antes los datos de ejemplo, que no se guardan.
+- El PDF se descarga con la descarga de claude.ai. No incluye imprimir, compartir ni notificaciones push (el visor de claude.ai no las permite): los recordatorios aparecen dentro de la app mientras está abierta.
+- Las consultas (búsqueda, calendario, estadísticas) usan `shared/queries.ts`, y hay pruebas que comprueban que dan lo mismo que el servidor.
+
 ## Publicarla para usarla en el móvil
 
 La app es un único servidor Node con una base de datos SQLite en disco, así que se puede alojar en cualquier servicio que ofrezca **un disco persistente** (Railway, Render, Fly.io, un VPS, un NAS en casa…). Debe servirse con **HTTPS** (lo dan estos servicios automáticamente).

@@ -6,10 +6,95 @@ import { api, errorMessage } from '@/api/client';
 import { qk, useAuthOptions } from '@/api/hooks';
 import { Logo } from '@/components/Logo';
 import { Button, Segmented } from '@/components/ui';
+import { IS_LOCAL } from '@/lib/env';
 
 const timezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export function AuthPage() {
+  return IS_LOCAL ? <LocalWelcome /> : <AccountAuth />;
+}
+
+/** Entrada de la versión de prueba: sin contraseñas, los datos son privados de quien la usa. */
+function LocalWelcome() {
+  const [name, setName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<'start' | 'demo' | null>(null);
+  const client = useQueryClient();
+
+  const finish = (user: User) => {
+    client.removeQueries({ predicate: (q) => q.queryKey[0] !== qk.me[0] && q.queryKey[0] !== qk.authOptions[0] });
+    client.setQueryData(qk.me, user);
+  };
+  const run = async (kind: 'start' | 'demo') => {
+    setError(null);
+    setBusy(kind);
+    try {
+      const { user } =
+        kind === 'start'
+          ? await api.post<{ user: User }>('/api/auth/register', { name })
+          : await api.post<{ user: User }>('/api/auth/demo');
+      finish(user);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center px-5 py-10">
+      <div className="w-full max-w-md">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Logo size={64} />
+          <h1 className="mt-5 font-display text-4xl font-semibold tracking-tight">Comida Amor</h1>
+          <p className="mt-2 text-[17px] text-ink-2">Tu diario de alimentación, sencillo y privado.</p>
+        </div>
+        <form
+          className="card space-y-4 p-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void run('start');
+          }}
+        >
+          <div>
+            <label className="label" htmlFor="local-name">
+              ¿Cómo te llamas?
+            </label>
+            <input
+              id="local-name"
+              className="field"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="given-name"
+              maxLength={60}
+              placeholder="Tu nombre"
+              required
+            />
+          </div>
+          {error && (
+            <p role="alert" className="rounded-2xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger">
+              {error}
+            </p>
+          )}
+          <Button type="submit" size="lg" className="w-full" loading={busy === 'start'} disabled={busy !== null || !name.trim()}>
+            Empezar mi diario
+          </Button>
+        </form>
+        <div className="mt-5 text-center">
+          <Button variant="ghost" icon={<Sparkles size={18} />} onClick={() => void run('demo')} loading={busy === 'demo'} disabled={busy !== null}>
+            Ver antes con datos de ejemplo
+          </Button>
+        </div>
+        <p className="mt-8 flex items-start justify-center gap-2 text-center text-[13px] leading-relaxed text-ink-3">
+          <Lock size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
+          Tus registros se guardan de forma privada: solo tú puedes verlos. Esta aplicación no hace diagnósticos ni sustituye el consejo médico.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function AccountAuth() {
   const [mode, setMode] = useState<'login' | 'register'>(() => {
     try {
       const saved = sessionStorage.getItem('ca-auth-mode');

@@ -2,7 +2,10 @@ import clsx from 'clsx';
 import { CalendarDays, ChartColumn, FileText, House, Plus, Settings, Zap } from 'lucide-react';
 import { useEffect } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router';
-import { useMe } from '@/api/hooks';
+import { useQueryClient } from '@tanstack/react-query';
+import { api } from '@/api/client';
+import { qk, useMe } from '@/api/hooks';
+import { IS_LOCAL } from '@/lib/env';
 import { useEntryEditor } from '@/context/EntryEditor';
 import { useInAppReminders } from '@/lib/useInAppReminders';
 import { Logo } from './Logo';
@@ -116,12 +119,22 @@ function SideNav() {
 function DemoBanner() {
   const me = useMe();
   const navigate = useNavigate();
+  const client = useQueryClient();
   if (!me.data?.isDemo) return null;
+  const exitDemo = async () => {
+    await api.post('/api/auth/logout').catch(() => undefined);
+    client.removeQueries({ predicate: (q) => q.queryKey[0] !== qk.me[0] });
+    await client.invalidateQueries({ queryKey: qk.me });
+  };
   return (
     <div className="no-print bg-ink px-4 py-2 text-center text-[13px] text-bg">
-      Estás viendo datos de demostración.{' '}
-      <button type="button" className="font-bold underline underline-offset-2" onClick={() => navigate('/ajustes#cuenta')}>
-        Crear mi propia cuenta
+      {IS_LOCAL ? 'Estás viendo datos de ejemplo.' : 'Estás viendo datos de demostración.'}{' '}
+      <button
+        type="button"
+        className="font-bold underline underline-offset-2"
+        onClick={() => (IS_LOCAL ? void exitDemo() : navigate('/ajustes#cuenta'))}
+      >
+        {IS_LOCAL ? 'Salir y empezar mi diario' : 'Crear mi propia cuenta'}
       </button>
     </div>
   );
@@ -167,7 +180,7 @@ export function Layout() {
       <SideNav />
       <div className="min-w-0 flex-1">
         <DemoBanner />
-        <main className="pb-nav safe-top px-4 pt-6 sm:px-6 lg:px-10 lg:pt-10">
+        <main className={`pb-nav px-4 pt-6 sm:px-6 lg:px-10 lg:pt-10 ${IS_LOCAL ? "" : "safe-top"}`}>
           <Outlet />
         </main>
       </div>

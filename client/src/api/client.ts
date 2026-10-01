@@ -1,5 +1,7 @@
 // Cliente HTTP mínimo para la API. Las cookies de sesión viajan automáticamente.
 
+import { IS_LOCAL } from '@/lib/env';
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -16,6 +18,16 @@ export function setUnauthorizedHandler(handler: () => void) {
 }
 
 async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
+  if (IS_LOCAL) {
+    // Versión de prueba: la «API» vive en el propio navegador.
+    const { localRequest } = await import('@/local/localApi');
+    try {
+      return await localRequest<T>(method, url, body);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401 && !url.startsWith('/api/auth/')) onUnauthorized?.();
+      throw error;
+    }
+  }
   const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
   let res: Response;
   try {

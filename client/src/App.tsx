@@ -1,13 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
-import { setUnauthorizedHandler } from './api/client';
+import { useEffect, useRef } from 'react';
+import { BrowserRouter, MemoryRouter, Navigate, Route, Routes, useNavigate } from 'react-router';
+import { api, setUnauthorizedHandler } from './api/client';
 import { qk, useMe } from './api/hooks';
 import { Layout } from './components/Layout';
 import { Logo } from './components/Logo';
 import { Button, EmptyState } from './components/ui';
 import { EntryEditorProvider } from './context/EntryEditor';
 import { FeedbackProvider } from './context/Feedback';
+import { IS_LOCAL } from './lib/env';
 import { useTheme } from './lib/theme';
 import { AuthPage } from './pages/AuthPage';
 import { CalendarPage } from './pages/CalendarPage';
@@ -19,6 +20,15 @@ import { TodayPage } from './pages/TodayPage';
 function Gate() {
   const me = useMe();
   const client = useQueryClient();
+  const navigate = useNavigate();
+  const signedIn = useRef(false);
+
+  // En la versión de prueba, al empezar (o volver de la demostración) se abre siempre «Hoy».
+  useEffect(() => {
+    const now = Boolean(me.data);
+    if (IS_LOCAL && now && !signedIn.current) navigate('/', { replace: true });
+    signedIn.current = now;
+  }, [me.data, navigate]);
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
@@ -30,11 +40,7 @@ function Gate() {
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (me.data && tz && me.data.timezone !== tz && !me.data.isDemo) {
-      void fetch('/api/account', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ timezone: tz }),
-      });
+      void api.patch('/api/account', { timezone: tz }).catch(() => undefined);
     }
   }, [me.data]);
 
@@ -74,13 +80,16 @@ function Gate() {
   );
 }
 
+// En la versión de prueba (página publicada) la dirección no cambia: se navega en memoria.
+const Router = IS_LOCAL ? MemoryRouter : BrowserRouter;
+
 export function App() {
   useTheme();
   return (
-    <BrowserRouter>
+    <Router>
       <FeedbackProvider>
         <Gate />
       </FeedbackProvider>
-    </BrowserRouter>
+    </Router>
   );
 }

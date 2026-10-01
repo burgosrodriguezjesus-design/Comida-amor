@@ -10,6 +10,8 @@ import { Button, PageHeader, Segmented, Spinner, Switch } from '@/components/ui'
 import { useFeedback } from '@/context/Feedback';
 import { newKey } from '@/lib/draft';
 import { currentPushSubscription, isIos, isStandalone, pushSupported, subscribeToPush, unsubscribeFromPush } from '@/lib/push';
+import { IS_LOCAL } from '@/lib/env';
+import { saveFile } from '@/lib/files';
 import { useTheme, type ThemePreference } from '@/lib/theme';
 
 function Section({ id, icon, title, children }: { id?: string; icon: ReactNode; title: string; children: ReactNode }) {
@@ -74,7 +76,7 @@ function ProfileSection({ user }: { user: User }) {
           Guardar
         </Button>
       </div>
-      {!user.isDemo && <p className="mt-2 text-sm text-ink-3">Correo: {user.email}</p>}
+      {!user.isDemo && user.email && <p className="mt-2 text-sm text-ink-3">Correo: {user.email}</p>}
     </Section>
   );
 }
@@ -141,7 +143,7 @@ function RemindersSection() {
 
   const toggleEnabled = async (enabled: boolean) => {
     persist({ enabled });
-    if (enabled && pushSupported() && deviceOn === false && settings.publicKey) await enableDevice();
+    if (enabled && !IS_LOCAL && pushSupported() && deviceOn === false && settings.publicKey) await enableDevice();
   };
 
   const updateTime = (id: string, patch: Partial<ReminderTime>) =>
@@ -226,7 +228,12 @@ function RemindersSection() {
             <p className="flex items-center gap-2 font-semibold">
               <MonitorSmartphone size={18} className="text-ink-3" aria-hidden="true" /> Este dispositivo
             </p>
-            {!supported ? (
+            {IS_LOCAL ? (
+              <p className="mt-1 text-sm text-ink-2">
+                En esta versión de prueba el aviso aparece dentro de la app mientras la tienes abierta. En la app completa,
+                instalada en el móvil, llega como notificación aunque esté cerrada.
+              </p>
+            ) : !supported ? (
               <p className="mt-1 text-sm text-ink-2">
                 Este navegador no admite notificaciones. Mientras tengas la app abierta, verás el aviso dentro de ella.
               </p>
@@ -273,10 +280,35 @@ function RemindersSection() {
 
 type DangerAction = 'entries' | 'account' | 'password' | null;
 
+const STORAGE_TEXT: Record<string, string> = {
+  cuenta: 'Tus registros, síntomas y fotos se guardan de forma privada en tu cuenta de Claude: solo tú puedes verlos, aunque compartas esta página.',
+  navegador: 'Tus registros se guardan solo en este navegador y dispositivo. Si borras los datos del navegador, se perderán: descarga una copia de vez en cuando.',
+  memoria: 'En esta vista no se pueden guardar datos: lo que registres se perderá al cerrar la página.',
+  demo: 'Estás viendo datos de ejemplo: no se guardan en ningún sitio.',
+};
+
 function PrivacySection({ user }: { user: User }) {
   const [action, setAction] = useState<DangerAction>(null);
+  const [storage, setStorage] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const client = useQueryClient();
   const { toast } = useFeedback();
+  useEffect(() => {
+    if (!IS_LOCAL) return;
+    void import('@/local/localApi').then((m) => m.storageKind()).then(setStorage);
+  }, []);
+  const exportData = async () => {
+    setExporting(true);
+    try {
+      const data = await api.get<unknown>('/api/account/export');
+      const result = await saveFile(JSON.stringify(data, null, 2), `comida-amor-datos-${new Date().toISOString().slice(0, 10)}.json`);
+      if (result.message) toast({ message: result.message, tone: 'error' });
+    } catch (err) {
+      toast({ message: errorMessage(err), tone: 'error' });
+    } finally {
+      setExporting(false);
+    }
+  };
   const signOutLocally = () => {
     client.removeQueries({ predicate: (q) => q.queryKey[0] !== qk.me[0] });
     client.setQueryData(qk.me, null);
@@ -284,18 +316,20 @@ function PrivacySection({ user }: { user: User }) {
   return (
     <Section id="privacidad" icon={<ShieldCheck size={18} />} title="Privacidad y datos">
       <p className="text-[15px] leading-relaxed text-ink-2">
-        Tus registros, síntomas y fotos son privados: solo se pueden ver con tu sesión iniciada y nunca se publican ni se comparten.
-        Las contraseñas se guardan cifradas de forma irreversible.
+        {IS_LOCAL
+          ? (storage && STORAGE_TEXT[storage]) ?? 'Tus registros son privados: solo tú puedes verlos.'
+          : 'Tus registros, síntomas y fotos son privados: solo se pueden ver con tu sesión iniciada y nunca se publican ni se comparten. Las contraseñas se guardan cifradas de forma irreversible.'}
       </p>
       <div className="mt-4 grid gap-2">
-        <a
-          href="/api/account/export"
-          download
-          className="flex h-12 items-center gap-3 rounded-2xl border border-line-strong bg-surface px-4 font-semibold hover:bg-surface-2"
+        <button
+          type="button"
+          onClick={() => void exportData()}
+          disabled={exporting}
+          className="flex h-12 items-center gap-3 rounded-2xl border border-line-strong bg-surface px-4 text-left font-semibold hover:bg-surface-2 disabled:opacity-60"
         >
           <Download size={18} className="text-ink-3" aria-hidden="true" /> Descargar una copia de mis datos
-        </a>
-        {!user.isDemo && (
+        </button>
+        {!user.isDemo && !IS_LOCAL && (
           <button
             type="button"
             onClick={() => setAction('password')}
@@ -304,6 +338,7 @@ function PrivacySection({ user }: { user: User }) {
             <KeyRound size={18} className="text-ink-3" aria-hidden="true" /> Cambiar contraseña
           </button>
         )}
+        {!IS_LOCAL && (
         <button
           type="button"
           onClick={async () => {
@@ -316,6 +351,7 @@ function PrivacySection({ user }: { user: User }) {
         >
           <LogOut size={18} className="text-ink-3" aria-hidden="true" /> Cerrar sesión en todos los dispositivos
         </button>
+        )}
       </div>
 
       <div className="mt-6 rounded-2xl bg-danger-soft/60 p-4">
@@ -326,7 +362,7 @@ function PrivacySection({ user }: { user: User }) {
             Borrar todos mis registros
           </Button>
           <Button variant="danger" icon={<Trash2 size={17} />} onClick={() => setAction('account')}>
-            Eliminar mi cuenta
+            {IS_LOCAL ? 'Borrar todo y empezar de cero' : 'Eliminar mi cuenta'}
           </Button>
         </div>
       </div>
@@ -335,7 +371,7 @@ function PrivacySection({ user }: { user: User }) {
       {(action === 'entries' || action === 'account') && (
         <DangerSheet
           kind={action}
-          isDemo={user.isDemo}
+          isDemo={user.isDemo || IS_LOCAL}
           onClose={() => setAction(null)}
           onDone={() => {
             setAction(null);
@@ -377,17 +413,19 @@ function DangerSheet({ kind, isDemo, onClose, onDone }: { kind: 'entries' | 'acc
       open
       onClose={onClose}
       size="sm"
-      title={kind === 'account' ? 'Eliminar mi cuenta' : 'Borrar todos mis registros'}
+      title={kind === 'account' ? (IS_LOCAL ? 'Borrar todo' : 'Eliminar mi cuenta') : 'Borrar todos mis registros'}
       footer={
         <Button variant="danger" size="lg" className="w-full" disabled={!ready} loading={busy} onClick={submit}>
-          {kind === 'account' ? 'Eliminar cuenta y datos' : 'Borrar todos los registros'}
+          {kind === 'account' ? (IS_LOCAL ? 'Borrar todo' : 'Eliminar cuenta y datos') : 'Borrar todos los registros'}
         </Button>
       }
     >
       <div className="space-y-4 pb-2">
         <p className="text-[15px] leading-relaxed text-ink-2">
           {kind === 'account'
-            ? 'Se eliminarán definitivamente tu cuenta, todos tus registros, síntomas, fotos y recordatorios. No se podrá recuperar nada.'
+            ? IS_LOCAL
+              ? 'Se eliminarán definitivamente tu nombre, todos tus registros, síntomas, fotos y recordatorios. No se podrá recuperar nada.'
+              : 'Se eliminarán definitivamente tu cuenta, todos tus registros, síntomas, fotos y recordatorios. No se podrá recuperar nada.'
             : 'Se eliminarán definitivamente todos tus registros, síntomas y fotos. Tu cuenta seguirá activa.'}{' '}
           Si quieres conservar una copia, descarga antes tus datos o un informe en PDF.
         </p>
@@ -465,6 +503,7 @@ function PasswordSheet({ onClose }: { onClose: () => void }) {
 function AccountSection({ user }: { user: User }) {
   const client = useQueryClient();
   const [busy, setBusy] = useState(false);
+  if (IS_LOCAL && !user.isDemo) return null;
   const logout = async () => {
     setBusy(true);
     if (user.isDemo) {
@@ -484,10 +523,12 @@ function AccountSection({ user }: { user: User }) {
       {user.isDemo ? (
         <>
           <p className="mb-3 text-[15px] text-ink-2">
-            Estás en la cuenta de demostración: los datos son de ejemplo y se regeneran cada día. Crea tu propia cuenta para llevar tu diario de forma privada.
+            {IS_LOCAL
+              ? 'Estás viendo datos de ejemplo. Cuando quieras, sal de la demostración y empieza tu propio diario.'
+              : 'Estás en la cuenta de demostración: los datos son de ejemplo y se regeneran cada día. Crea tu propia cuenta para llevar tu diario de forma privada.'}
           </p>
           <Button className="w-full" onClick={logout} loading={busy}>
-            Salir de la demo y crear mi cuenta
+            {IS_LOCAL ? 'Salir y empezar mi diario' : 'Salir de la demo y crear mi cuenta'}
           </Button>
         </>
       ) : (

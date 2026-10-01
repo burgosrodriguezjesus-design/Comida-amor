@@ -10,20 +10,11 @@ import { useFeedback } from '@/context/Feedback';
 import { MEAL_TYPE_LABELS } from '@shared/constants';
 import { longDate, numericDate, plural } from '@/lib/format';
 import { feelingText, generateReportPdf, groupByDay, itemText, reportFileName, reportSummary, type ReportOptions } from '@/lib/pdf';
+import { IS_LOCAL } from '@/lib/env';
+import { saveFile } from '@/lib/files';
 import { useNow } from '@/lib/useNow';
 
 type Period = '7' | '14' | '30' | 'custom';
-
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
-}
 
 export function ReportPage() {
   const { date: today } = useNow();
@@ -55,8 +46,9 @@ export function ReportPage() {
     setBusy('pdf');
     try {
       const file = await buildPdf();
-      downloadBlob(file, file.name);
-      toast({ message: 'PDF guardado en tu dispositivo', tone: 'success' });
+      const result = await saveFile(file, file.name);
+      if (result.ok) toast({ message: 'PDF listo en tu dispositivo', tone: 'success' });
+      else if (result.message) toast({ message: result.message, tone: 'error' });
     } catch (err) {
       toast({ message: errorMessage(err), tone: 'error' });
     } finally {
@@ -72,7 +64,7 @@ export function ReportPage() {
       if (navigator.canShare?.(data)) {
         await navigator.share(data);
       } else {
-        downloadBlob(file, file.name);
+        await saveFile(file, file.name);
         toast({ message: 'Tu navegador no permite compartir archivos directamente. Se ha descargado el PDF para que puedas enviarlo.', duration: 6000 });
       }
     } catch (err) {
@@ -125,16 +117,20 @@ export function ReportPage() {
             ? 'Preparando el informe…'
             : `Del ${numericDate(from)} al ${numericDate(to)} · ${plural(summary.daysWithEntries, 'día con registros', 'días con registros')} · ${plural(summary.entries, 'registro', 'registros')}`}
         </div>
-        <div className="mb-4 grid grid-cols-3 gap-2 sm:gap-3">
+        <div className={`mb-4 grid gap-2 sm:gap-3 ${IS_LOCAL ? 'grid-cols-1' : 'grid-cols-3'}`}>
           <Button size="lg" className="flex-col gap-1 py-3 h-auto sm:flex-row" icon={<Download size={20} />} onClick={download} loading={busy === 'pdf'} disabled={busy !== null || range.isPending || entries.length === 0}>
-            <span className="text-[13px] sm:text-[15px]">PDF</span>
+            <span className="text-[13px] sm:text-[15px]">{IS_LOCAL ? 'Descargar PDF' : 'PDF'}</span>
           </Button>
+          {!IS_LOCAL && (
+            <>
           <Button size="lg" variant="secondary" className="h-auto flex-col gap-1 py-3 sm:flex-row" icon={<Printer size={20} />} onClick={() => window.print()} disabled={range.isPending || entries.length === 0}>
             <span className="text-[13px] sm:text-[15px]">Imprimir</span>
           </Button>
           <Button size="lg" variant="secondary" className="h-auto flex-col gap-1 py-3 sm:flex-row" icon={<Share2 size={20} />} onClick={share} loading={busy === 'share'} disabled={busy !== null || range.isPending || entries.length === 0}>
             <span className="text-[13px] sm:text-[15px]">Compartir</span>
           </Button>
+            </>
+          )}
         </div>
 
         <details className="card group mb-6 p-5">
