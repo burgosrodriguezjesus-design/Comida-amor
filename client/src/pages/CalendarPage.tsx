@@ -226,7 +226,7 @@ function WeekView({ selected, today, onSelect }: { selected: string; today: stri
                   type="button"
                   onClick={() => onSelect(day)}
                   className={clsx(
-                    'mb-1 flex w-full items-center justify-between rounded-xl px-2 py-1 text-left',
+                    'mb-1 flex min-h-10 w-full items-center justify-between gap-2 rounded-xl px-2 py-2 text-left',
                     day === selected ? 'bg-brand-soft text-brand' : 'hover:bg-surface-2',
                   )}
                 >

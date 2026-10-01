@@ -184,7 +184,7 @@ export function QuickAddSheet({
                     onClick={() => toggleKind(item.name, item.kind)}
                     title={item.kind === 'drink' ? 'Bebida (toca para marcar como alimento)' : 'Alimento (toca para marcar como bebida)'}
                     className={clsx(
-                      'animate-pop-in inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium',
+                      'animate-pop-in inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-medium',
                       item.kind === 'drink' ? 'bg-drink-soft text-drink' : 'bg-surface-2 text-ink',
                     )}
                   >

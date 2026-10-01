@@ -294,10 +294,10 @@ function FilterSheet({
       title="Filtros"
       footer={
         <div className="flex gap-3">
-          <Button variant="secondary" className="shrink-0" onClick={() => setDraft({ ...draft, from: '', to: '', types: [], food: '', symptoms: false, photos: false })}>
+          <Button size="lg" variant="secondary" className="shrink-0" onClick={() => setDraft({ ...draft, from: '', to: '', types: [], food: '', symptoms: false, photos: false })}>
             Borrar
           </Button>
-          <Button className="flex-1" onClick={() => onApply(draft)}>
+          <Button size="lg" className="flex-1" onClick={() => onApply(draft)}>
             Ver resultados
           </Button>
         </div>

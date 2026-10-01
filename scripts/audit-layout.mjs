@@ -48,6 +48,14 @@ function inspect() {
     return box.right - box.left > 1 && box.bottom - box.top > 1 ? box : null;
   };
   const name = (el) => (el.getAttribute('aria-label') || el.textContent || el.getAttribute('type') || el.tagName).trim().slice(0, 30);
+  // Botones con fondo o borde (no enlaces de texto) aplastados: menos de 36 px de alto.
+  for (const el of controls) {
+    if (el.tagName !== 'BUTTON' || !visibleRect(el)) continue;
+    const st = getComputedStyle(el);
+    const styled = (st.backgroundColor !== 'rgba(0, 0, 0, 0)' && st.backgroundColor !== 'transparent') || parseFloat(st.borderTopWidth) > 0;
+    const h = el.getBoundingClientRect().height;
+    if (styled && h < 36 && !['switch', 'gridcell'].includes(el.getAttribute('role') ?? '')) out.push(`botón «${name(el)}» demasiado bajo (${Math.round(h)} px)`);
+  }
   for (let i = 0; i < controls.length; i += 1) {
     const a = controls[i];
     const ra = visibleRect(a);
@@ -94,6 +102,11 @@ try {
       await page.getByRole('button', { name: /datos de demostración/ }).click();
       await page.getByText('Lo que has comido hoy').waitFor();
       await audit(page, `${width} hoy`, `${tag}-hoy`);
+      await page.getByRole('button', { name: 'Opciones del registro' }).first().click();
+      await page.getByRole('menuitem', { name: 'Eliminar' }).click();
+      await page.getByRole('dialog', { name: '¿Eliminar este registro?' }).waitFor();
+      await audit(page, `${width} confirmar eliminar`, `${tag}-confirmar`);
+      await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
 
       await page.getByRole('button', { name: /Registro rápido/ }).click();
       await page.getByLabel('¿Qué acabas de comer?').fill('Café con leche y un croissant');

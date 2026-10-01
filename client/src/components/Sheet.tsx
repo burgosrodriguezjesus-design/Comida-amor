@@ -102,7 +102,7 @@ export function Sheet({
           </IconButton>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 sm:px-6">{children}</div>
-        {footer && <div className="safe-bottom shrink-0 border-t border-line bg-bg px-5 pt-3 pb-3 sm:rounded-b-[2rem] sm:px-6 sm:pb-5">{footer}</div>}
+        {footer && <div className="shrink-0 border-t border-line bg-bg px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:rounded-b-[2rem] sm:px-6 sm:pb-5">{footer}</div>}
       </div>
     </div>,
     document.body,

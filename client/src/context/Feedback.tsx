@@ -96,13 +96,18 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
         title={confirmState?.title ?? ''}
         size="sm"
         footer={
-          // En móvil, botones uno encima de otro (el principal arriba) para que los textos largos no se partan.
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
-            <Button variant="secondary" className="flex-1" onClick={() => closeConfirm(false)}>
-              {confirmState?.cancelLabel ?? 'Cancelar'}
-            </Button>
-            <Button variant={confirmState?.danger ? 'danger' : 'primary'} className="flex-1" onClick={() => closeConfirm(true)}>
+          // En móvil, botones grandes uno encima de otro (el principal arriba); en pantallas anchas, en fila.
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Button
+              size="xl"
+              variant={confirmState?.danger ? 'danger' : 'primary'}
+              className="w-full sm:order-2"
+              onClick={() => closeConfirm(true)}
+            >
               {confirmState?.confirmLabel ?? 'Aceptar'}
+            </Button>
+            <Button size="xl" variant="secondary" className="w-full sm:order-1" onClick={() => closeConfirm(false)}>
+              {confirmState?.cancelLabel ?? 'Cancelar'}
             </Button>
           </div>
         }
