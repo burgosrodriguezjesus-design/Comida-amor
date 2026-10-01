@@ -59,6 +59,26 @@ npm run build && npm run e2e   # recorrido completo con un navegador real + capt
 
 La prueba de extremo a extremo recorre registro rápido (y deshacer), formulario completo con foto y síntomas, edición, borrado, calendario, búsqueda, filtros, estadísticas, descarga del PDF, ajustes, modo oscuro, escritorio y una cuenta nueva (incluido que una cuenta no puede ver los datos de otra).
 
+## App publicada (Vercel + Supabase)
+
+La versión que se usa en el día a día está publicada en **Vercel** y guarda los datos en **Supabase**:
+
+```
+Móvil / ordenador ── app (Vercel, estática, instalable) ──► Supabase
+                                                             ├─ Auth: cuentas con correo y contraseña
+                                                             ├─ Postgres con RLS: cada persona solo ve lo suyo
+                                                             ├─ Storage privado: fotos (enlaces temporales de 1 h)
+                                                             └─ Edge Functions + pg_cron: alta, borrado, recordatorios push
+```
+
+- `npm run build:web` genera la app (modo `web`, configuración pública en `client/.env.web`).
+- `vercel.json`: compilación, reescritura de rutas y cabeceras de seguridad (CSP, HSTS…).
+- `supabase/migrations/`: esquema, políticas RLS, almacén de fotos y tarea programada de recordatorios.
+- `supabase/functions/`: `signup` (crea la cuenta ya confirmada), `delete-account` (borra registros o la cuenta y sus fotos, pidiendo la contraseña) y `send-reminders` (avisos push cada minuto y notificación de prueba).
+- Las claves privadas de notificaciones y el secreto de la tarea programada están en `private.settings`, una tabla que no expone la API.
+- Para cerrar el registro de cuentas nuevas: `update private.settings set value = 'false' where key = 'allow_registration';`
+- `npm run e2e:web` prueba la app con un Supabase simulado en el navegador.
+
 ## Versión de prueba (sin servidor)
 
 Además de la app completa, el proyecto genera una **versión que funciona entera en el navegador**, pensada para probarla sin instalar nada, por ejemplo publicada como página privada en claude.ai:
